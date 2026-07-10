@@ -9,3 +9,7 @@ dist/
 build/
 .pytest_cache/
 .gstack/
+
+# Secrets — all env variants (never commit real values)
+.env.*
+!.env.example
