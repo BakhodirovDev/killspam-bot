@@ -60,20 +60,25 @@ pipeline {
     }
 
     stage('Deploy') {
-      when { anyOf { branch 'main'; branch 'master' } }
+      // No branch gate: this single-branch "Pipeline from SCM" job only ever builds
+      // the configured branch (master). env.BRANCH_NAME is unset here (that's a
+      // Multibranch-only var), so a `when { branch ... }` would skip forever.
       steps {
         // compose pulls image: killspam-bot:latest (just built) + env_file: .env.
         // `up -d` recreates the bot and starts Postgres if it isn't already running.
         sh '$COMPOSE up -d --remove-orphans'
         sh '''
-          echo "Waiting for /health ..."
+          # Poll the container's own HEALTHCHECK (Dockerfile) via docker inspect —
+          # works regardless of whether the agent can reach the published port.
+          cid=$($COMPOSE ps -q bot)
+          echo "Waiting for bot ($cid) to become healthy ..."
           for i in $(seq 1 30); do
-            if curl -fsS http://localhost:6050/health >/dev/null 2>&1; then
-              echo "bot is healthy"; exit 0
-            fi
+            status=$(docker inspect -f '{{.State.Health.Status}}' "$cid" 2>/dev/null || echo missing)
+            if [ "$status" = healthy ]; then echo "bot is healthy"; exit 0; fi
+            if [ "$status" = missing ]; then echo "bot container gone"; break; fi
             sleep 2
           done
-          echo "health check did not pass in time — recent bot logs:"
+          echo "bot not healthy in time (last status: $status) — recent logs:"
           $COMPOSE logs --tail=80 bot
           exit 1
         '''
