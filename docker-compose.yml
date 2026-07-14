@@ -1,0 +1,15 @@
+name: killspam
+
+services:
+  bot:
+    image: killspam-bot:latest
+    build: .
+    restart: unless-stopped
+    env_file: .env          # injected by Jenkins from a managed file (see Jenkinsfile)
+    ports:
+      - "6050:6050"         # /key + /health; BASE_URL in .env must resolve to this
+    # Postgres is external (DATABASE_URL in .env points at 5.189.188.113). If it
+    # runs on THIS host outside Docker, add:
+    #   extra_hosts:
+    #     - "host.docker.internal:host-gateway"
+    # and use host.docker.internal in DATABASE_URL.

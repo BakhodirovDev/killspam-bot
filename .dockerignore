@@ -1,0 +1,13 @@
+.git
+.github
+.venv
+venv
+**/__pycache__
+*.pyc
+.pytest_cache
+pytest-report.xml
+*.md
+# Never bake secrets into an image layer — .env is provided at runtime via env_file.
+.env
+.env.*
+!.env.example
