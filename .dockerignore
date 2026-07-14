@@ -6,7 +6,9 @@ venv
 *.pyc
 .pytest_cache
 pytest-report.xml
+# CHANGELOG.md is kept — the bot reads it at runtime for release announcements.
 *.md
+!CHANGELOG.md
 # Never bake secrets into an image layer — .env is provided at runtime via env_file.
 .env
 .env.*
